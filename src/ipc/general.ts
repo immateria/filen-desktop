@@ -19,6 +19,14 @@ import {
     execCommand
 } from "../utils"
 import {
+    runAction,
+    triggerRule,
+    loadRules,
+    saveRules,
+    type Action,
+    type RuleConfig
+} from "../lib/actions"
+import {
     type IPCShowSaveDialogResultParams,
     type IPCShowSaveDialogResult,
     type IPCSelectDirectoryResult,
@@ -155,6 +163,22 @@ export function registerGeneralHandlers(ipc: IPC): void {
         }
 
         return await execCommand(`osascript -e ${JSON.stringify(script)}`)
+    })
+
+    ipcMain.handle("runAction", async (_, action: Action): Promise<void> => {
+        await runAction(action)
+    })
+
+    ipcMain.handle("triggerRule", async (_, name: string): Promise<void> => {
+        await triggerRule(name)
+    })
+
+    ipcMain.handle("getRules", async () => {
+        return await loadRules()
+    })
+
+    ipcMain.handle("saveRules", async (_, rules: RuleConfig) => {
+        await saveRules(rules)
     })
 
     ipcMain.handle("isPathWritable", async (_, path: string) => {

@@ -16,6 +16,7 @@ import WindowState from "./lib/windowState"
 import Status from "./lib/status"
 import Options from "./lib/options"
 import { execCommand } from "./utils"
+import { triggerRule } from "./lib/actions"
 import os from "os"
 
 if (IS_ELECTRON) {
@@ -36,8 +37,9 @@ if (IS_ELECTRON) {
  * @typedef {FilenDesktop}
  */
 export class FilenDesktop {
-	public driveWindow: BrowserWindow | null = null
-	public launcherWindow: BrowserWindow | null = null
+        public driveWindow: BrowserWindow | null = null
+        public launcherWindow: BrowserWindow | null = null
+        public automationWindow: BrowserWindow | null = null
 	public readonly ipc: IPC
 	public readonly sdk: FilenSDK
 	public readonly worker: Worker
@@ -266,6 +268,48 @@ export class FilenDesktop {
                 this.launcherWindow = null
         }
 
+       public async showAutomationWindow(): Promise<void> {
+               if (!this.automationWindow) {
+                       await this.createAutomationWindow()
+               }
+
+               this.automationWindow?.show()
+       }
+
+       private async createAutomationWindow(): Promise<void> {
+               if (this.automationWindow) {
+                       return
+               }
+
+               this.automationWindow = new BrowserWindow({
+                       width: 600,
+                       height: 400,
+                       title: "Automation Rules",
+                       resizable: true,
+                       minimizable: false,
+                       maximizable: false,
+                       show: false,
+                       parent: this.driveWindow ?? undefined,
+                       webPreferences: {
+                               contextIsolation: true,
+                               preload: isDev
+                                       ? pathModule.join(__dirname, "..", "dist", "preload.js")
+                                       : pathModule.join(__dirname, "preload.js"),
+                               devTools: isDev,
+                               zoomFactor: 1
+                       }
+               })
+
+               this.automationWindow.webContents.setZoomFactor(1)
+               this.automationWindow.webContents.setVisualZoomLevelLimits(1, 1)
+
+               await this.automationWindow.loadFile(pathModule.join("..", "public", "automations.html"))
+
+               this.automationWindow.on("closed", () => {
+                       this.automationWindow = null
+               })
+       }
+
        public registerURLProtocol(): void {
                if ((process.platform !== "darwin" && process.platform !== "win32") || this.urlProtocolRegistered) {
                        return
@@ -328,6 +372,15 @@ export class FilenDesktop {
 
                                                 if (script) {
                                                         await execCommand(`osascript -e ${JSON.stringify(script)}`)
+                                                }
+                                        }
+                                        break
+                                case "trigger-rule":
+                                        {
+                                                const name = parsed.searchParams.get("name")
+
+                                                if (name) {
+                                                        await triggerRule(name)
                                                 }
                                         }
                                         break

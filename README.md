@@ -55,6 +55,35 @@ open location "filen://toggle-fullscreen"
 open location "filen://run-applescript?script=display%20dialog%20\"Hello\""
 ```
 
+### Automation rules
+
+Filen can execute user defined actions through a simple rule system. Rules are
+stored in a `rules.json` file inside the application's user data directory. A
+rule contains an array of actions. Actions can run AppleScript on macOS,
+PowerShell on Windows, generic shell commands, small JavaScript snippets or one
+of the built in internal actions.
+
+Example `rules.json`:
+
+```json
+{
+  "note": [
+    {
+      "type": "internal",
+      "name": "createMarkdownNote",
+      "params": { "path": "~/Notes/note.md", "content": "# Hello" }
+    },
+    { "type": "applescript", "script": "display dialog \"Note created\"" }
+  ]
+}
+```
+
+A rule can be triggered from other applications using the url
+`filen://trigger-rule?name=note` or programmatically via the `triggerRule` IPC
+handler.
+
+Rules can also be edited from the **Automations** window available in the tray menu.
+
 ## License
 
 Distributed under the AGPL-3.0 License. See [LICENSE](https://github.com/FilenCloudDienste/filen-desktop/blob/main/LICENSE.md) for more information.
