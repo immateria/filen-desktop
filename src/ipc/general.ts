@@ -11,7 +11,13 @@ import {
 import { tryingToSyncDesktop, isPathSyncedByICloud } from "@filen/sync"
 import { type SyncPair } from "@filen/sync/dist/types"
 import { setConfig } from "../config"
-import { isPortInUse, canStartServerOnIPAndPort, getDiskType, getLocalDirectorySize } from "../utils"
+import {
+    isPortInUse,
+    canStartServerOnIPAndPort,
+    getDiskType,
+    getLocalDirectorySize,
+    execCommand
+} from "../utils"
 import {
     type IPCShowSaveDialogResultParams,
     type IPCShowSaveDialogResult,
@@ -141,6 +147,14 @@ export function registerGeneralHandlers(ipc: IPC): void {
         if (open.length > 0) {
             throw new Error(open)
         }
+    })
+
+    ipcMain.handle("runAppleScript", async (_, script: string): Promise<string> => {
+        if (process.platform !== "darwin") {
+            return ""
+        }
+
+        return await execCommand(`osascript -e ${JSON.stringify(script)}`)
     })
 
     ipcMain.handle("isPathWritable", async (_, path: string) => {
@@ -278,6 +292,22 @@ export function registerGeneralHandlers(ipc: IPC): void {
     ipcMain.handle("setStartMinimized", async (_, startMinimized: boolean) => {
         await ipc.desktop.options.update({
             startMinimized
+        })
+    })
+
+    ipcMain.handle("setEnableURLProtocol", async (_, enable: boolean) => {
+        ipc.desktop.enableURLProtocol = enable
+
+        if (process.platform === "darwin" || process.platform === "win32") {
+            if (enable) {
+                ipc.desktop.registerURLProtocol()
+            } else {
+                ipc.desktop.unregisterURLProtocol()
+            }
+        }
+
+        await ipc.desktop.options.update({
+            enableURLProtocol: enable
         })
     })
 }

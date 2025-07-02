@@ -43,6 +43,18 @@ Where <os> is either "win", "mac" or "linux"
 Building the client requires setting up signing and notarization. See "build/" directory and package.json key.
 ```
 
+### URI and AppleScript integration
+
+On macOS and Windows Filen can register the `filen://` URL scheme so other
+applications can interact with the client. On macOS this can be used from
+AppleScript and the feature can be toggled in the settings:
+
+```applescript
+open location "filen://focus"
+open location "filen://toggle-fullscreen"
+open location "filen://run-applescript?script=display%20dialog%20\"Hello\""
+```
+
 ## License
 
 Distributed under the AGPL-3.0 License. See [LICENSE](https://github.com/FilenCloudDienste/filen-desktop/blob/main/LICENSE.md) for more information.
