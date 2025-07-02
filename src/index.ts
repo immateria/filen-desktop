@@ -15,6 +15,7 @@ import serveProd from "./lib/serve"
 import WindowState from "./lib/windowState"
 import Status from "./lib/status"
 import Options from "./lib/options"
+import { execCommand } from "./utils"
 import os from "os"
 
 if (IS_ELECTRON) {
@@ -49,9 +50,11 @@ export class FilenDesktop {
 	public logger: Logger
 	public isUnityRunning: boolean = process.platform === "linux" ? app.isUnityRunning() : false
 	public serve: (window: BrowserWindow) => Promise<void>
-	public windowState: WindowState
-	public minimizeToTray: boolean = false
-	public status: Status
+       public windowState: WindowState
+       public minimizeToTray: boolean = false
+       public enableURLProtocol: boolean = false
+       public status: Status
+       private urlProtocolRegistered = false
 	public options: Options
 	public shouldExitOnQuit: boolean = false
 
@@ -127,9 +130,15 @@ export class FilenDesktop {
 				return
 			}
 
-			const options = await this.options.get()
+                       const options = await this.options.get()
 
-			await app.whenReady()
+                       this.enableURLProtocol = options.enableURLProtocol ?? false
+
+                       await app.whenReady()
+
+                       if (this.enableURLProtocol) {
+                               this.registerURLProtocol()
+                       }
 
 			if (options.startMinimized && process.platform === "darwin") {
 				app?.dock?.hide()
@@ -145,15 +154,19 @@ export class FilenDesktop {
 				app.exit(0)
 			})
 
-			app.on("second-instance", () => {
-				if (this.driveWindow) {
-					if (this.driveWindow.isMinimized()) {
-						this.driveWindow.restore()
-					}
+                       app.on("second-instance", (_event, argv) => {
+                               if (this.driveWindow) {
+                                       if (this.driveWindow.isMinimized()) {
+                                               this.driveWindow.restore()
+                                       }
 
-					this.driveWindow.focus()
-				}
-			})
+                                       this.driveWindow.focus()
+                               }
+
+                               if (this.enableURLProtocol) {
+                                       this.handleProtocolArgv(argv)
+                               }
+                       })
 
 			app.setAppUserModelId("io.filen.desktop")
 			app.setName("Filen")
@@ -244,14 +257,85 @@ export class FilenDesktop {
 		}
 	}
 
-	private destroyLauncherWindow(): void {
-		if (!this.launcherWindow || this.launcherWindow.isDestroyed()) {
-			return
-		}
+        private destroyLauncherWindow(): void {
+                if (!this.launcherWindow || this.launcherWindow.isDestroyed()) {
+                        return
+                }
 
-		this.launcherWindow.destroy()
-		this.launcherWindow = null
-	}
+                this.launcherWindow.destroy()
+                this.launcherWindow = null
+        }
+
+       public registerURLProtocol(): void {
+               if ((process.platform !== "darwin" && process.platform !== "win32") || this.urlProtocolRegistered) {
+                       return
+               }
+
+               if (!app.isDefaultProtocolClient("filen")) {
+                       app.setAsDefaultProtocolClient("filen")
+               }
+
+               if (process.platform === "darwin") {
+                       app.on("open-url", (event, url) => {
+                               event.preventDefault()
+                               void this.handleProtocol(url)
+                       })
+               } else if (process.platform === "win32") {
+                       this.handleProtocolArgv(process.argv)
+               }
+
+               this.urlProtocolRegistered = true
+       }
+
+       public unregisterURLProtocol(): void {
+               if ((process.platform !== "darwin" && process.platform !== "win32") || !this.urlProtocolRegistered) {
+                       return
+               }
+
+               app.removeAsDefaultProtocolClient("filen")
+
+               if (process.platform === "darwin") {
+                       app.removeAllListeners("open-url")
+               }
+
+               this.urlProtocolRegistered = false
+       }
+
+       private handleProtocolArgv(argv: string[]): void {
+               const arg = argv.find(a => a.startsWith("filen://"))
+
+               if (arg) {
+                       void this.handleProtocol(arg)
+               }
+       }
+
+        private async handleProtocol(url: string): Promise<void> {
+                try {
+                        const parsed = new URL(url)
+
+                        switch (parsed.hostname) {
+                                case "focus":
+                                        this.showOrOpenDriveWindow()
+                                        break
+                                case "toggle-fullscreen":
+                                        if (this.driveWindow) {
+                                                this.driveWindow.setFullScreen(!this.driveWindow.isFullScreen())
+                                        }
+                                        break
+                                case "run-applescript":
+                                        {
+                                                const script = parsed.searchParams.get("script")
+
+                                                if (script) {
+                                                        await execCommand(`osascript -e ${JSON.stringify(script)}`)
+                                                }
+                                        }
+                                        break
+                        }
+                } catch (err) {
+                        this.logger.log("error", err)
+                }
+        }
 
 	public showOrOpenDriveWindow(): void {
 		if (BrowserWindow.getAllWindows().length === 0) {

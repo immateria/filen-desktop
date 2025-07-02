@@ -30,11 +30,31 @@ export function registerWindowHandlers(ipc: IPC): void {
         ipc.desktop.driveWindow?.hide()
     })
 
+    ipcMain.handle("focusWindow", async (): Promise<void> => {
+        ipc.desktop.driveWindow?.focus()
+    })
+
+    ipcMain.handle("toggleFullscreen", async (): Promise<void> => {
+        const win = ipc.desktop.driveWindow
+
+        if (win) {
+            win.setFullScreen(!win.isFullScreen())
+        }
+    })
+
     ipcMain.handle("isWindowMaximized", async (): Promise<boolean> => {
         if (!ipc.desktop.driveWindow) {
             return false
         }
 
         return ipc.desktop.driveWindow.isMaximized()
+    })
+
+    ipcMain.handle("isWindowFullscreen", async (): Promise<boolean> => {
+        if (!ipc.desktop.driveWindow) {
+            return false
+        }
+
+        return ipc.desktop.driveWindow.isFullScreen()
     })
 }

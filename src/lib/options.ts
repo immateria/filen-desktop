@@ -6,8 +6,9 @@ import pathModule from "path"
 export const OPTIONS_VERSION = 1
 
 export type OptionsType = {
-	minimizeToTray?: boolean
-	startMinimized?: boolean
+        minimizeToTray?: boolean
+        startMinimized?: boolean
+       enableURLProtocol?: boolean
 }
 
 export class Options {

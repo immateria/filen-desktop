@@ -32,18 +32,22 @@ export type DesktopAPI = {
 	}
 	ping: () => Promise<string>
 	minimizeWindow: () => Promise<void>
-	maximizeWindow: () => Promise<void>
-	unmaximizeWindow: () => Promise<void>
-	isWindowMaximized: () => Promise<boolean>
-	closeWindow: () => Promise<void>
+        maximizeWindow: () => Promise<void>
+        unmaximizeWindow: () => Promise<void>
+        isWindowMaximized: () => Promise<boolean>
+        isWindowFullscreen: () => Promise<boolean>
+        closeWindow: () => Promise<void>
 	restart: () => Promise<void>
 	setConfig: (config: FilenDesktopConfig) => Promise<void>
 	showWindow: () => Promise<void>
-	hideWindow: () => Promise<void>
-	downloadFile: (params: IPCDownloadFileParams) => Promise<string>
-	downloadDirectory: (params: IPCDownloadDirectoryParams) => Promise<string>
-	showSaveDialog: (params?: IPCShowSaveDialogResultParams) => Promise<IPCShowSaveDialogResult>
-	downloadMultipleFilesAndDirectories: (params: IPCDownloadMultipleFilesAndDirectoriesParams) => Promise<string>
+        hideWindow: () => Promise<void>
+        focusWindow: () => Promise<void>
+        toggleFullscreen: () => Promise<void>
+        runAppleScript: (script: string) => Promise<string>
+        downloadFile: (params: IPCDownloadFileParams) => Promise<string>
+        downloadDirectory: (params: IPCDownloadDirectoryParams) => Promise<string>
+        showSaveDialog: (params?: IPCShowSaveDialogResultParams) => Promise<IPCShowSaveDialogResult>
+        downloadMultipleFilesAndDirectories: (params: IPCDownloadMultipleFilesAndDirectoriesParams) => Promise<string>
 	pausePauseSignal: (params: IPCPauseResumeAbortSignalParams) => Promise<void>
 	resumePauseSignal: (params: IPCPauseResumeAbortSignalParams) => Promise<void>
 	abortAbortSignal: (params: IPCPauseResumeAbortSignalParams) => Promise<void>
@@ -118,9 +122,10 @@ export type DesktopAPI = {
 	isFUSETInstalledOnMacOS: () => Promise<boolean>
 	tryingToSyncDesktop: (path: string) => Promise<boolean>
 	isPathSyncedByICloud: (path: string) => Promise<boolean>
-	setMinimizeToTray: (minimizeToTray: boolean) => Promise<void>
-	setStartMinimized: (startMinimized: boolean) => Promise<void>
-	syncUpdateConfirmDeletion: (params: { uuid: string; result: "delete" | "restart" }) => Promise<void>
+       setMinimizeToTray: (minimizeToTray: boolean) => Promise<void>
+       setStartMinimized: (startMinimized: boolean) => Promise<void>
+       setEnableURLProtocol: (enable: boolean) => Promise<void>
+       syncUpdateConfirmDeletion: (params: { uuid: string; result: "delete" | "restart" }) => Promise<void>
 }
 
 if (env.isBrowser || env.isElectron) {
@@ -141,14 +146,18 @@ if (env.isBrowser || env.isElectron) {
 		ping: () => ipcRenderer.invoke("ping"),
 		minimizeWindow: () => ipcRenderer.invoke("minimizeWindow"),
 		maximizeWindow: () => ipcRenderer.invoke("maximizeWindow"),
-		unmaximizeWindow: () => ipcRenderer.invoke("unmaximizeWindow"),
-		isWindowMaximized: () => ipcRenderer.invoke("isWindowMaximized"),
-		closeWindow: () => ipcRenderer.invoke("closeWindow"),
+                unmaximizeWindow: () => ipcRenderer.invoke("unmaximizeWindow"),
+                isWindowMaximized: () => ipcRenderer.invoke("isWindowMaximized"),
+                isWindowFullscreen: () => ipcRenderer.invoke("isWindowFullscreen"),
+                closeWindow: () => ipcRenderer.invoke("closeWindow"),
 		restart: () => ipcRenderer.invoke("restart"),
 		setConfig: config => ipcRenderer.invoke("setConfig", config),
-		showWindow: () => ipcRenderer.invoke("showWindow"),
-		hideWindow: () => ipcRenderer.invoke("hideWindow"),
-		downloadFile: params => ipcRenderer.invoke("downloadFile", params),
+                showWindow: () => ipcRenderer.invoke("showWindow"),
+                hideWindow: () => ipcRenderer.invoke("hideWindow"),
+                focusWindow: () => ipcRenderer.invoke("focusWindow"),
+                toggleFullscreen: () => ipcRenderer.invoke("toggleFullscreen"),
+                runAppleScript: script => ipcRenderer.invoke("runAppleScript", script),
+                downloadFile: params => ipcRenderer.invoke("downloadFile", params),
 		downloadDirectory: params => ipcRenderer.invoke("downloadDirectory", params),
 		showSaveDialog: params => ipcRenderer.invoke("showSaveDialog", params),
 		downloadMultipleFilesAndDirectories: params => ipcRenderer.invoke("downloadMultipleFilesAndDirectories", params),
@@ -225,9 +234,10 @@ if (env.isBrowser || env.isElectron) {
 		syncUpdatePairs: params => ipcRenderer.invoke("syncUpdatePairs", params),
 		tryingToSyncDesktop: path => ipcRenderer.invoke("tryingToSyncDesktop", path),
 		isPathSyncedByICloud: path => ipcRenderer.invoke("isPathSyncedByICloud", path),
-		setMinimizeToTray: minimizeToTray => ipcRenderer.invoke("setMinimizeToTray", minimizeToTray),
-		setStartMinimized: startMinimized => ipcRenderer.invoke("setStartMinimized", startMinimized),
-		syncUpdateConfirmDeletion: params => ipcRenderer.invoke("syncUpdateConfirmDeletion", params),
+               setMinimizeToTray: minimizeToTray => ipcRenderer.invoke("setMinimizeToTray", minimizeToTray),
+               setStartMinimized: startMinimized => ipcRenderer.invoke("setStartMinimized", startMinimized),
+               setEnableURLProtocol: enable => ipcRenderer.invoke("setEnableURLProtocol", enable),
+               syncUpdateConfirmDeletion: params => ipcRenderer.invoke("syncUpdateConfirmDeletion", params),
 		syncUpdateRequireConfirmationOnLargeDeletions: params => ipcRenderer.invoke("syncUpdateRequireConfirmationOnLargeDeletions", params)
 	} satisfies DesktopAPI)
 }
