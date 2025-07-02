@@ -45,17 +45,24 @@ export class Status {
 						}),
 						enabled: false
 					},
-					{
-						label: "Open",
-						type: "normal",
-						click: () => {
-							this.desktop.showOrOpenDriveWindow()
-						}
-					},
-					{
-						label: "Separator",
-						type: "separator"
-					},
+                                        {
+                                                label: "Open",
+                                                type: "normal",
+                                                click: () => {
+                                                        this.desktop.showOrOpenDriveWindow()
+                                                }
+                                        },
+                                        {
+                                                label: "Automations",
+                                                type: "normal",
+                                                click: () => {
+                                                        void this.desktop.showAutomationWindow()
+                                                }
+                                        },
+                                        {
+                                                label: "Separator",
+                                                type: "separator"
+                                        },
 					{
 						label: "Exit",
 						type: "normal",

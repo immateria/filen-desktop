@@ -14,6 +14,7 @@ import { type FilenDesktopConfig } from "./types"
 import { type SyncMode, type SyncPair } from "@filen/sync/dist/types"
 import { type DriveInfo } from "./utils"
 import { type GetStats } from "@filen/network-drive/dist/types"
+import { type Action, type RuleConfig } from "./lib/actions"
 
 const env = {
 	isBrowser:
@@ -42,9 +43,13 @@ export type DesktopAPI = {
 	showWindow: () => Promise<void>
         hideWindow: () => Promise<void>
         focusWindow: () => Promise<void>
-        toggleFullscreen: () => Promise<void>
-        runAppleScript: (script: string) => Promise<string>
-        downloadFile: (params: IPCDownloadFileParams) => Promise<string>
+       toggleFullscreen: () => Promise<void>
+       runAppleScript: (script: string) => Promise<string>
+       runAction: (action: Action) => Promise<void>
+       triggerRule: (name: string) => Promise<void>
+       getRules: () => Promise<RuleConfig>
+       saveRules: (rules: RuleConfig) => Promise<void>
+       downloadFile: (params: IPCDownloadFileParams) => Promise<string>
         downloadDirectory: (params: IPCDownloadDirectoryParams) => Promise<string>
         showSaveDialog: (params?: IPCShowSaveDialogResultParams) => Promise<IPCShowSaveDialogResult>
         downloadMultipleFilesAndDirectories: (params: IPCDownloadMultipleFilesAndDirectoriesParams) => Promise<string>
@@ -154,10 +159,14 @@ if (env.isBrowser || env.isElectron) {
 		setConfig: config => ipcRenderer.invoke("setConfig", config),
                 showWindow: () => ipcRenderer.invoke("showWindow"),
                 hideWindow: () => ipcRenderer.invoke("hideWindow"),
-                focusWindow: () => ipcRenderer.invoke("focusWindow"),
-                toggleFullscreen: () => ipcRenderer.invoke("toggleFullscreen"),
-                runAppleScript: script => ipcRenderer.invoke("runAppleScript", script),
-                downloadFile: params => ipcRenderer.invoke("downloadFile", params),
+               focusWindow: () => ipcRenderer.invoke("focusWindow"),
+               toggleFullscreen: () => ipcRenderer.invoke("toggleFullscreen"),
+               runAppleScript: script => ipcRenderer.invoke("runAppleScript", script),
+               runAction: action => ipcRenderer.invoke("runAction", action),
+               triggerRule: name => ipcRenderer.invoke("triggerRule", name),
+               getRules: () => ipcRenderer.invoke("getRules"),
+               saveRules: rules => ipcRenderer.invoke("saveRules", rules),
+               downloadFile: params => ipcRenderer.invoke("downloadFile", params),
 		downloadDirectory: params => ipcRenderer.invoke("downloadDirectory", params),
 		showSaveDialog: params => ipcRenderer.invoke("showSaveDialog", params),
 		downloadMultipleFilesAndDirectories: params => ipcRenderer.invoke("downloadMultipleFilesAndDirectories", params),
